@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Storage</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>#app:not([hidden]) { display: grid; gap: 16px; }</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M6.5 19a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.6 8.6 5 5 0 0 1 17.5 19h-11Z"/></svg>
+    <div>
+      <h1>My Storage</h1>
+      <p class="sub">Self-service portal &middot; usage, recommendations &amp; more space</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span id="who" class="pill"></span>
+    <button id="btn-logout" class="btn ghost" hidden>Log out</button>
+  </div>
+</header>
+
+<main>
+  <section id="login" class="card" style="max-width:420px">
+    <div class="card-head"><h2>Log in with your Nextcloud account</h2></div>
+    <form id="login-form">
+      <div class="form-row"><input id="l-user" type="text" class="grow" placeholder="Username" autocomplete="username" required></div>
+      <div class="form-row"><input id="l-pass" type="password" class="grow" placeholder="Password" autocomplete="current-password" required></div>
+      <div class="form-row"><button class="btn" type="submit">Log in</button><span id="l-err" class="small status critical"></span></div>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <div id="msg" class="notice" hidden></div>
+    <section class="kpis">
+      <div class="kpi">
+        <div class="kpi-label">My storage used</div>
+        <div class="kpi-value" id="k-used">–</div>
+        <div class="meter" id="k-meter-wrap"><div id="k-meter"></div></div>
+        <div class="kpi-foot" id="k-used-foot"></div>
+      </div>
+      <div class="kpi"><div class="kpi-label">Trash bin</div><div class="kpi-value" id="k-trash">–</div><div class="kpi-foot">still counts towards your quota</div></div>
+      <div class="kpi"><div class="kpi-label">Old versions</div><div class="kpi-value" id="k-versions">–</div><div class="kpi-foot">kept by Nextcloud</div></div>
+      <div class="kpi"><div class="kpi-label">Growth rate</div><div class="kpi-value" id="k-growth">–</div><div class="kpi-foot" id="k-growth-foot"></div></div>
+      <div class="kpi"><div class="kpi-label">Quota full in</div><div class="kpi-value" id="k-days">–</div><div class="kpi-foot">at the current rate</div></div>
+      <div class="kpi"><div class="kpi-label">My monthly cost</div><div class="kpi-value" id="k-cost">–</div><div class="kpi-foot" id="k-cost-foot"></div></div>
+    </section>
+
+    <section class="grid one-one">
+      <div class="card">
+        <div class="card-head"><h2>Notifications</h2></div>
+        <ul id="alerts" class="alert-list"></ul>
+        <h3>Need more space?</h3>
+        <div class="form-row">
+          <label for="r-extra">Extra space</label>
+          <select id="r-extra" style="width:auto">
+            <option value="100">+100 MB</option><option value="250" selected>+250 MB</option>
+            <option value="500">+500 MB</option><option value="1024">+1 GB</option>
+          </select>
+        </div>
+        <div class="form-row"><input id="r-reason" type="text" class="grow" placeholder="Reason (e.g. project videos for the final review)"></div>
+        <div class="form-row"><button id="btn-request" class="btn">Ask the administrator</button></div>
+        <ul id="requests" class="rec-list short-list"></ul>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Recommended for you</h2><span class="muted small">ways to free space</span></div>
+        <div class="form-row"><button id="btn-trash" class="btn ghost">Empty my trash bin</button></div>
+        <ul id="recs" class="rec-list"></ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2 id="cold-title">Files you have not touched in months</h2><span class="muted small" id="cold-note"></span></div>
+      <div class="table-wrap">
+        <table id="cold-table">
+          <thead><tr><th>File</th><th>Type</th><th class="num">Size</th><th class="num">Last modified</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>My largest files</h2><span class="muted small">compress any file: it is replaced by a .zip only if that saves space</span></div>
+      <div class="table-wrap">
+        <table id="files-table">
+          <thead><tr><th>File</th><th>Type</th><th class="num">Size</th><th class="num">Modified</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="/static/me.js"></script>
+</body>
+</html>

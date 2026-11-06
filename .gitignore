@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.db
+.env
+
+# course reports and submission material (contain personal details)
+submission/
+docs/*.pdf

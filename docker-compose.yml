@@ -1,0 +1,76 @@
+# Nextcloud private cloud + predictive storage monitoring layer
+#   Nextcloud  -> http://localhost:8080   (admin / see NEXTCLOUD_ADMIN_PASSWORD)
+#   Monitor    -> http://localhost:8000
+# Values come from .env (see .env.example); the defaults below are for local demos only.
+
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+      MARIADB_DATABASE: nextcloud
+      MARIADB_USER: nextcloud
+      MARIADB_PASSWORD: ${NEXTCLOUD_DB_PASSWORD:-nextcloudpass}
+      MONITOR_DB_PASSWORD: ${MONITOR_DB_PASSWORD:-monitorpass}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  nextcloud:
+    image: nextcloud:30-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: ${NEXTCLOUD_DB_PASSWORD:-nextcloudpass}
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD:-Admin@Cloud2026}
+      # "nextcloud" lets the monitor container call the API by service name
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost 127.0.0.1 nextcloud
+    volumes:
+      - nextcloud_data:/var/www/html
+
+  monitor:
+    build: ./monitor
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      nextcloud:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    environment:
+      MONITOR_MODE: nextcloud
+      DATABASE_URL: mysql+pymysql://monitor:${MONITOR_DB_PASSWORD:-monitorpass}@db/monitor
+      NEXTCLOUD_DB_URL: mysql+pymysql://monitor:${MONITOR_DB_PASSWORD:-monitorpass}@db/nextcloud
+      NEXTCLOUD_URL: http://nextcloud
+      NEXTCLOUD_PUBLIC_URL: http://localhost:8080
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD:-Admin@Cloud2026}
+      STORAGE_CAPACITY_GB: ${STORAGE_CAPACITY_GB:-1}
+      COLLECT_INTERVAL_SECONDS: ${COLLECT_INTERVAL_SECONDS:-30}
+      # live demo data grows over minutes, so regress over the last 15 minutes
+      PREDICTION_WINDOW_MINUTES: ${PREDICTION_WINDOW_MINUTES:-15}
+      # recommendation thresholds scaled to the small demo pool
+      TRASH_MIN_MB: ${TRASH_MIN_MB:-2}
+      VERSIONS_MIN_MB: ${VERSIONS_MIN_MB:-5}
+      OLD_FILES_MIN_MB: ${OLD_FILES_MIN_MB:-10}
+      LARGE_FILE_MB: ${LARGE_FILE_MB:-50}
+
+volumes:
+  db_data:
+  nextcloud_data:
