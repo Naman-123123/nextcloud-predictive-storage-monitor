@@ -1,9 +1,68 @@
 # Predictive Storage Resource Monitoring and Optimization for a Nextcloud-Based Private Cloud
 
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?logo=docker&logoColor=white)
+![Nextcloud](https://img.shields.io/badge/Nextcloud-30-0082C9?logo=nextcloud&logoColor=white)
+![MariaDB](https://img.shields.io/badge/MariaDB-10.11-003545?logo=mariadb&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?logo=chartdotjs&logoColor=white)
+
 A Nextcloud private cloud (Docker) extended with a lightweight **predictive storage-monitoring layer**:
 it collects storage usage, keeps history, fits the growth trend, predicts when capacity (and each user's quota)
 will be exhausted, raises proactive alerts (also pushed into Nextcloud's notification bell) and
 recommends how to reclaim space.
+
+![Live dashboard while uploads fill the pool](docs/images/demo.gif)
+
+*The live dashboard during an upload burst (sped up 2.5×): the forecast shortens and alerts escalate.*
+
+## Features
+
+- **Capacity forecasting**: least-squares regression on usage history predicts when the pool, and each user's
+  quota, will be full.
+- **Proactive alerts**: warning and critical alerts before the disk fills, pushed into Nextcloud's own
+  notification bell and resolved automatically when the trend calms down.
+- **Optimization advice**: trash bin, old versions, duplicates, large and cold files, each with its potential saving.
+- **Elastic storage**: pool resizing, threshold-based autoscaling, thin-provisioning view and a scaling log.
+- **Quota workflow**: users request more space, the admin approves, and the quota changes in Nextcloud.
+- **User self-service portal** (`/me`): compress files, delete cold data, empty the trash, see your own cost.
+- **Demo mode without Docker**: a simulated Nextcloud with four growth scenarios and a virtual clock.
+
+## Quick start
+
+Demo mode (only Python needed, any OS):
+```
+cd monitor
+pip install -r requirements.txt
+python -m uvicorn app.main:app --port 8000      # open http://localhost:8000
+```
+
+Full stack with real Nextcloud (Docker):
+```
+cp .env.example .env
+docker compose up -d --build                     # Nextcloud :8080, monitor :8000
+pip install httpx
+python scripts/generate_load.py --setup          # demo users, quotas, shares and files
+```
+Logins are in [CREDENTIALS.md](CREDENTIALS.md). Details for both options are under [Running it](#running-it).
+
+## Screenshots
+
+**Key figures**: usage, growth rate, predicted time to full, active alerts and reclaimable space.
+![KPI cards](docs/images/kpis.png)
+
+| Usage and regression forecast | Proactive alerts |
+|---|---|
+| ![Forecast chart](docs/images/forecast.png) | ![Alerts](docs/images/alerts.png) |
+
+**Per-user forecasts**: quota usage, growth per day and time until each quota is full.
+![Users and quotas](docs/images/users.png)
+
+| Optimization recommendations | Alerts in Nextcloud's bell |
+|---|---|
+| ![Recommendations](docs/images/recommendations.png) | ![Nextcloud notifications](docs/images/nextcloud-bell.png) |
+
+## How it works
 
 ```
 Nextcloud ─▶ Collect usage ─▶ Store history ─▶ Analyse growth ─▶ Predict capacity ─▶ Alerts ─▶ Recommendations
